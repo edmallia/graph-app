@@ -9,7 +9,15 @@ import ReactFlow, {
 } from 'reactflow';
 import dagre from 'dagre';
 
+import styled, { ThemeProvider } from 'styled-components';
+import CustomNode from './CustomNode';
 import 'reactflow/dist/style.css';
+const nodeTypes = {
+    main: CustomNode,
+};
+const ReactFlowStyled = styled(ReactFlow)`
+  background-color: ${(props) => props.theme.bg};
+`;
 
 //for calling the API
 import axios from 'axios';
@@ -59,10 +67,21 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
 };
 
 const GraphLayoutFlow = () => {
+
   const graph  = useLoaderData();
 
+  console.log("g assetname" + graph.assetName);
+  console.log(graph);
+  const vertices = graph.vertices.map(v => {
+    console.log(v.id);
+        if (v.id === graph.assetName) {
+            v.type = 'main';
+        } 
+        return v;
+    });
+  
   const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-    graph.vertices,
+    vertices,
     graph.edges
   );
   
@@ -92,12 +111,13 @@ const GraphLayoutFlow = () => {
 
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
-    <ReactFlow
+    <ReactFlowStyled
       nodes={nodes}
       edges={edges}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
+      nodeTypes={nodeTypes}
       connectionLineType={ConnectionLineType.SmoothStep}
       fitView
     >
@@ -106,7 +126,7 @@ const GraphLayoutFlow = () => {
         <button onClick={() => onLayout('LR')}>horizontal layout</button>
       </Panel>
       <MiniMap pannable zoomable />
-    </ReactFlow>
+    </ReactFlowStyled>
     </div>
   );
 };
@@ -116,5 +136,9 @@ export default GraphLayoutFlow;
 //load the graph formed data from the API
 export async function loader({ params }) {  
   const result = await axios.get('/api/asset/' + params.assetName + '/graph');   
-  return result.data;
+  
+  const retVal = {assetName : params.assetName}
+  retVal.vertices = result.data.vertices;
+  retVal.edges = result.data.edges;
+  return retVal;
 }

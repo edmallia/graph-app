@@ -22,6 +22,7 @@
     "react-grid-system": "^8.1.9",
     "react-router-dom": "^6.22.0",
     "reactflow": "^11.10.3",
+    "styled-components": "latest",
     "vite3-plugin-express": "^0.1.5"
   },
   "devDependencies": {
