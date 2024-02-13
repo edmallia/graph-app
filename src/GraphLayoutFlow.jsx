@@ -136,9 +136,5 @@ export default GraphLayoutFlow;
 //load the graph formed data from the API
 export async function loader({ params }) {  
   const result = await axios.get('/api/asset/' + params.assetName + '/graph');   
-  
-  const retVal = {assetName : params.assetName}
-  retVal.vertices = result.data.vertices;
-  retVal.edges = result.data.edges;
-  return retVal;
+  return result.data;
 }

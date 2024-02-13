@@ -28,6 +28,10 @@ let unwindConnections = { $unwind: "$connections" };
 
 let replaceRoot = { $replaceRoot: { newRoot: "$connections" } };
 
+let setAssetName = function(name){
+  return {$set : {assetName: name}}
+}
+
 let unwindRelations = {
   $unwind: { path: "$relations", preserveNullAndEmptyArrays: true },
 };
@@ -60,6 +64,7 @@ export let fetchGraph = async function (name) {
     replaceRoot,
     unwindRelations,
     group,
+    setAssetName(name),
     projectOutId
   ];
 
