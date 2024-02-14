@@ -62,12 +62,11 @@ let unwindRelations = {
 export let group = {
   $group: {
     _id: null,
-    vertices: { $addToSet: { id: "$name", data: { label: "$name" } } },
+    vertices: { $addToSet: { id: "$name", type: "$type", data: { label: "$name" } } },
     edges: {
       $addToSet: {
         source: "$name",
         target: "$relations.r.n",
-        type: "edgeType",
         label: "$relations.d",
       },
     },

@@ -10,11 +10,21 @@ import ReactFlow, {
 import dagre from 'dagre';
 
 import styled, { ThemeProvider } from 'styled-components';
-import CustomNode from './CustomNode';
+import MainNode from './nodes/MainNode';
+import UserNode from './nodes/UserNode';
+import RoleNode from './nodes/RoleNode';
+import BucketNode from './nodes/BucketNode';
+import PayloadNode from './nodes/PayloadNode';
 import 'reactflow/dist/style.css';
 const nodeTypes = {
-    main: CustomNode,
+    MAIN: MainNode,
+    USER: UserNode,
+    ROLE: RoleNode,
+    BUCKET: BucketNode,
+    PAYLOAD: PayloadNode
 };
+import Legend from './Legend';
+
 const ReactFlowStyled = styled(ReactFlow)`
   background-color: ${(props) => props.theme.bg};
 `;
@@ -24,7 +34,6 @@ import axios from 'axios';
 
 
 import { useLoaderData } from "react-router-dom";
-
 
 //initialise DAGRE Graph
 const dagreGraph = new dagre.graphlib.Graph();
@@ -67,15 +76,10 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
 };
 
 const GraphLayoutFlow = () => {
-
   const graph  = useLoaderData();
-
-  console.log("g assetname" + graph.assetName);
-  console.log(graph);
   const vertices = graph.vertices.map(v => {
-    console.log(v.id);
         if (v.id === graph.assetName) {
-            v.type = 'main';
+            v.type = 'MAIN';
         } 
         return v;
     });
@@ -121,11 +125,13 @@ const GraphLayoutFlow = () => {
       connectionLineType={ConnectionLineType.SmoothStep}
       fitView
     >
-      <Panel position="top-right">
+      <Panel position="top-left">
         <button onClick={() => onLayout('TB')}>vertical layout</button>
         <button onClick={() => onLayout('LR')}>horizontal layout</button>
+        <Legend/>
       </Panel>
-      <MiniMap pannable zoomable />
+      <MiniMap pannable zoomable nodeStrokeColor="DarkSlateGrey" nodeColor="DarkSlateGrey"/>
+      
     </ReactFlowStyled>
     </div>
   );
