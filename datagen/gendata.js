@@ -42,107 +42,130 @@
 
 // Load Chance
 import Chance from "chance";
-
 // Instantiate Chance so it can be used
 const chance = new Chance();
 
 import { MongoClient } from "mongodb";
-
 // Replace the uri string with your connection string.
 const uri = "mongodb://localhost:27017/?replicaSet=replset";
 const client = new MongoClient(uri);
 
+import toRoman from "roman-numerals";
+
 const logOutput = false;
 
 import fs from "node:fs";
-const seed = loadSeed("./datagen/seed.json");
-
+const originalSeed = loadSeed("./datagen/seed.json");
 
 log("Starting data generation process ...");
 log("______________________________________________");
 log("Seed file ...");
 log("______________________________________________");
-logObject(seed);
+logObject(originalSeed);
 log("______________________________________________");
 
 const maxBucketPerUserOrRole = 5;
 const maxRolePerUser = 5;
 
-const docs = [];
+const batches = 5000;
 
-//generate data for all users
-seed.users.forEach((u) => {
-  let obj = {};
-  obj.type = "USER";
-  obj.name = u;
-  obj._id = { t: obj.type, n: obj.name };
-  obj.relations = [];
+try {
+  for (let i = 0; i < batches; i++) {
+    console.log("Creating batch " + i + " ...");
+    const seed = JSON.parse(JSON.stringify(originalSeed));
 
-  addBucketRelations(obj);
-  addRoleRelations(obj);
+    if (i > 0) {
+      //modify the seed before continuing
+      seed.users.forEach((user, index) => {
+        seed.users[index] = user + " " + i; //toRoman(i);
+      });
 
-  logObject(obj);
-  docs.push(obj);
-});
+      seed.roles.forEach((role, index) => {
+        seed.roles[index] = role + " " + i; //toRoman(i);
+      });
 
-//generate data for all roles
-seed.roles.forEach((r) => {
-  let obj = {};
-  obj.type = "ROLE";
-  obj.name = r;
-  obj._id = { t: obj.type, n: obj.name };
-  obj.relations = [];
+      seed.buckets.forEach((bucket, index) => {
+        seed.buckets[index] = bucket + " " + i; //toRoman(i);
+      });
+    }
 
-  addBucketRelations(obj);
+    const docs = [];
 
-  logObject(obj);
+    //generate data for all users
+    seed.users.forEach((u) => {
+      let obj = {};
+      obj.type = "USER";
+      obj.name = u;
+      obj._id = { t: obj.type, n: obj.name };
+      obj.relations = [];
 
-  docs.push(obj);
-});
+      addBucketRelations(obj, seed);
+      addRoleRelations(obj, seed);
 
-//generate data for all buckets
-seed.buckets.forEach((b) => {
-  let obj = {};
-  obj.type = "BUCKET";
-  obj.name = b;
-  obj._id = { t: obj.type, n: obj.name };
-  obj.relations = [];
+      logObject(obj);
+      docs.push(obj);
+    });
 
-  addPayloadRelations(obj);
+    //generate data for all roles
+    seed.roles.forEach((r) => {
+      let obj = {};
+      obj.type = "ROLE";
+      obj.name = r;
+      obj._id = { t: obj.type, n: obj.name };
+      obj.relations = [];
 
-  logObject(obj);
+      addBucketRelations(obj, seed);
 
-  docs.push(obj);
-});
+      logObject(obj);
 
-//generate data for all payloads
-seed.payloads.forEach((b) => {
-  let obj = {};
-  obj.type = "PAYLOAD";
-  obj.name = b;
-  obj._id = { t: obj.type, n: obj.name };
-  obj.relations = [];
+      docs.push(obj);
+    });
 
-  logObject(obj);
+    //generate data for all buckets
+    seed.buckets.forEach((b) => {
+      let obj = {};
+      obj.type = "BUCKET";
+      obj.name = b;
+      obj._id = { t: obj.type, n: obj.name };
+      obj.relations = [];
 
-  docs.push(obj);
-});
+      addPayloadRelations(obj, seed);
 
-saveData().catch(console.dir);
+      logObject(obj);
 
-async function saveData() {
-  try {
-    const database = client.db("graph");
-    const coll = database.collection("data");
+      docs.push(obj);
+    });
 
-    await coll.insertMany(docs);
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
+    //insert payloads only for first run
+    if (i === 0) {
+      //generate data for all payloads
+      seed.payloads.forEach((b) => {
+        let obj = {};
+        obj.type = "PAYLOAD";
+        obj.name = b;
+        obj._id = { t: obj.type, n: obj.name };
+        obj.relations = [];
+
+        logObject(obj);
+
+        docs.push(obj);
+      });
+    }
+
+    await saveData(docs).catch(console.dir);
   }
+} finally {
+  // Ensures that the client will close when you finish/error
+  await client.close();
 }
 
-function addBucketRelations(obj) {
+async function saveData(docs) {
+  const database = client.db("graph");
+  const coll = database.collection("data");
+  await coll.insertMany(docs, { ordered: false });
+}
+
+function addBucketRelations(obj, seed) {
   let max = Math.min(maxBucketPerUserOrRole, seed.buckets.length);
   let directAccessResource = chance.pickset(
     seed.buckets,
@@ -154,7 +177,7 @@ function addBucketRelations(obj) {
   });
 }
 
-function addRoleRelations(obj) {
+function addRoleRelations(obj, seed) {
   let rolesToChooseFrom = seed.roles;
   if (rolesToChooseFrom.length >= 1) {
     let max = Math.min(maxRolePerUser, rolesToChooseFrom.length);
@@ -168,7 +191,7 @@ function addRoleRelations(obj) {
   }
 }
 
-function addPayloadRelations(obj) {
+function addPayloadRelations(obj, seed) {
   let payloads = chance.pickset(
     seed.payloads,
     chance.integer({ min: 1, max: seed.payloads.length })
@@ -195,7 +218,7 @@ function logObject(obj, txt) {
 function loadSeed(filename) {
   log("starting to read file");
   try {
-    const data = fs.readFileSync(filename, 'utf8');
+    const data = fs.readFileSync(filename, "utf8");
     return JSON.parse(data);
   } catch (err) {
     console.error(err);

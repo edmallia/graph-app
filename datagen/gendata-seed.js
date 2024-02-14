@@ -7,9 +7,9 @@ const chance = new Chance();
 
 import fs from 'node:fs';
 
-const noOfUsers = 500;
-const noOfRoles = 300;
-const noOfBuckets = 500;
+const noOfUsers = 1000; 
+const noOfRoles = 389; //389 is the largest possible number, imposed by the underlying chance.js
+const noOfBuckets = 947; //947 is the largest possible number, imposed by the underlying chance.js
 
 let result = {
     "users" : [],
