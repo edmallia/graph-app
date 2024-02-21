@@ -47,7 +47,7 @@ const chance = new Chance();
 
 import { MongoClient } from "mongodb";
 // Replace the uri string with your connection string.
-const uri = "mongodb://localhost:27017/?replicaSet=replset";
+const uri = "mongodb://localhost:27017,localhost:27018,localhost:27019/?replicaSet=replset";
 const client = new MongoClient(uri);
 
 import toRoman from "roman-numerals";
@@ -55,7 +55,8 @@ import toRoman from "roman-numerals";
 const logOutput = false;
 
 import fs from "node:fs";
-const originalSeed = loadSeed("./datagen/seed.json");
+const seedInputFile = "./datagen/seed.json"
+const originalSeed = loadSeed(seedInputFile);
 
 log("Starting data generation process ...");
 log("______________________________________________");
