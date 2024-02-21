@@ -3,15 +3,25 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 
 import { Container, Row, Col } from "react-grid-system";
+import { useLoaderData, useSearchParams } from "react-router-dom";
 
 const Assets = () => {
+  
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [buckets, setBuckets] = useState([]);
 
+  const [searchParams] = useSearchParams();
+  
+  let skip = searchParams.get("skip")
+  if (!skip){
+    skip = 0;
+  }
+
+
   useEffect(() => {
     axios
-      .get("/api/assets/users")
+      .get("/api/assets/users?skip=" + skip)
       .then((response) => {
         setUsers(response.data);
       })
@@ -20,7 +30,7 @@ const Assets = () => {
       });
 
     axios
-      .get("/api/assets/roles")
+      .get("/api/assets/roles?skip=" + skip)
       .then((response) => {
         setRoles(response.data);
       })
@@ -29,7 +39,7 @@ const Assets = () => {
       });
 
     axios
-      .get("/api/assets/buckets")
+      .get("/api/assets/buckets?skip=" + skip)
       .then((response) => {
         setBuckets(response.data);
       })

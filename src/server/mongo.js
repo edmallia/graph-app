@@ -156,7 +156,7 @@ let unionStage = function(name){
 }
 
 export let fetchGraph = async function (name) {
-  console.log(name);
+  console.log("Fetching graph for: " + name);
   let pipeline = [
     matchByNameStage(name),
     graphLookup,
@@ -176,55 +176,58 @@ export let fetchGraph = async function (name) {
 };
 
 
-export let fetchUsers = async function(){
+let cleanSkip = function(skip){
+  if (!skip){ 
+    return 0 
+  }
+  else if (typeof skip === "string"){
+    return Number(skip)
+  }
+  return skip
+}
+
+export let fetchUsers = async function(skip){
   let query = { type: 'USER'};
+
+  skip = cleanSkip(skip)
 
   let options = {
     projection: {_id:0, name:1},
     sort : {name:1},
-    limit: 100
+    limit: 100,
+    skip: skip
   };
-
+  
   const result = await coll.find(query,options)
   return result.toArray()
 }
 
-export let fetchUsersAgg = async function(){
-
-  let query = { type: 'USER'};
-  let projection = {_id:0, name:1};
-
-  let pipeline = [
-    {$match : query},
-    {$sort : {name: 1}},
-    {$limit: 100},
-    {$project: projection}
-  ]
-
-  const result = await coll.aggregate(pipeline);
-  return result.toArray()
-}
-
-export let fetchRoles = async function(){
+export let fetchRoles = async function(skip){
   let query = { type: 'ROLE'};
 
+  skip = cleanSkip(skip)
+
   let options = {
     projection: {_id:0, name:1},
     sort : {name:1},
-    limit : 100
+    limit : 100,
+    skip: skip
   };
 
   const result = await coll.find(query,options)
   return result.toArray()
 }
 
-export let fetchBuckets = async function(){
+export let fetchBuckets = async function(skip){
   let query = { type: 'BUCKET'};
+
+  skip = cleanSkip(skip)
 
   let options = {
     projection: {_id:0, name:1},
     sort : {name:1},
-    limit: 100
+    limit: 100,
+    skip: skip
   };
 
   const result = await coll.find(query,options)
